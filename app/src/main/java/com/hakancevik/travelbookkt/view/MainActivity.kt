@@ -1,11 +1,10 @@
-package com.hakancevik.travelbookkt
+package com.hakancevik.travelbookkt.view
 
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
 import com.hakancevik.travelbookkt.databinding.ActivityMainBinding
-import com.hakancevik.travelbookkt.databinding.ActivityMapsBinding
 
 class MainActivity : AppCompatActivity() {
 
@@ -22,12 +21,9 @@ class MainActivity : AppCompatActivity() {
 
 
     fun addPlace(view: View) {
-
         var intent = Intent(this@MainActivity, MapsActivity::class.java)
         intent.putExtra("info", "new")
         startActivity(intent)
-
-
     }
 
 

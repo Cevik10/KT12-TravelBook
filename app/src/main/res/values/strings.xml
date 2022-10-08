@@ -1,4 +1,7 @@
 <resources>
     <string name="app_name">TravelBookKt</string>
     <string name="title_activity_maps">MapsActivity</string>
+    <string name="save">Save</string>
+    <string name="delete">Delete</string>
+    <string name="place_name">Place name</string>
 </resources>

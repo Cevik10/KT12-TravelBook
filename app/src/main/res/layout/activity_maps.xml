@@ -11,7 +11,7 @@
         android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:context=".MapsActivity" />
+        tools:context=".view.MapsActivity" />
 
     <androidx.cardview.widget.CardView
         android:id="@+id/cardView2"
@@ -35,7 +35,7 @@
                 android:background="@drawable/custom_save_place_button"
                 android:onClick="savePlace"
                 android:padding="11dp"
-                android:text="save"
+                android:text="@string/save"
                 android:textAllCaps="false"
                 android:textColor="@color/black"
                 android:textSize="19sp"
@@ -54,7 +54,7 @@
                 android:background="@drawable/custom_delete_place_button"
                 android:onClick="deletePlace"
                 android:padding="11dp"
-                android:text="delete"
+                android:text="@string/delete"
                 android:textAllCaps="false"
                 android:textColor="@color/black"
                 android:textSize="19sp"
@@ -103,7 +103,7 @@
                     android:background="@drawable/custom_place_name_textline"
 
                     android:ems="10"
-                    android:hint="place name:"
+                    android:hint="@string/place_name"
                     android:importantForAutofill="no"
                     android:inputType="textPersonName"
                     android:maxLength="29"

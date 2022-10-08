@@ -1,4 +1,4 @@
-package com.hakancevik.travelbookkt
+package com.hakancevik.travelbookkt.view
 
 import android.Manifest
 import android.content.SharedPreferences
@@ -14,6 +14,7 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.room.Room
 
 
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -24,7 +25,11 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.MarkerOptions
 
 import com.google.android.material.snackbar.Snackbar
+import com.hakancevik.travelbookkt.R
 import com.hakancevik.travelbookkt.databinding.ActivityMapsBinding
+import com.hakancevik.travelbookkt.model.Place
+import com.hakancevik.travelbookkt.roomdb.PlaceDao
+import com.hakancevik.travelbookkt.roomdb.PlaceDatabase
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapLongClickListener {
 
@@ -41,6 +46,10 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapLon
 
     private var selectedLatitude: Double? = null
     private var selectedLongitude: Double? = null
+
+
+    private lateinit var db: PlaceDatabase
+    private lateinit var placeDao: PlaceDao
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,6 +70,15 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapLon
         selectedLongitude = 0.0
 
 
+
+        db = Room.databaseBuilder(
+            applicationContext,
+            PlaceDatabase::class.java, "Places"
+        ).build()
+
+        placeDao = db.placeDao()
+
+
     }
 
 
@@ -79,7 +97,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapLon
 
                 if (trackBoolean == false) {
 
-                    var userLocation = LatLng(location.latitude, location.longitude)
+                    val userLocation = LatLng(location.latitude, location.longitude)
                     mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(userLocation, 15f))
                     sharedPreferences.edit().putBoolean("info", true).apply()
 
@@ -154,15 +172,24 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapLon
     }
 
 
+    fun savePlace(view: View) {
 
-    fun savePlace(view: View){
+        if (selectedLatitude != null && selectedLongitude != null) {
+            val place = Place(binding.placeNameText.text.toString(), selectedLatitude!!, selectedLongitude!!)
 
+            placeDao.insert(place)
+        }
 
     }
 
 
-    fun deletePlace(view: View){
+    fun deletePlace(view: View) {
 
+        if (selectedLatitude != null && selectedLongitude != null) {
+            val place = Place(binding.placeNameText.text.toString(), selectedLatitude!!, selectedLongitude!!)
+
+            placeDao.delete(place)
+        }
 
     }
 

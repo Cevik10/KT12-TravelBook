@@ -16,7 +16,7 @@
         android:theme="@style/Theme.TravelBookKt"
         tools:targetApi="31">
         <activity
-            android:name=".MainActivity"
+            android:name=".view.MainActivity"
             android:exported="true"
             android:label="Travel Book">
             <meta-data
@@ -34,10 +34,10 @@
             android:value="AIzaSyB5OGcHdiykSPIXJOrWSoo2tXW4oOOHivw" />
 
         <activity
-            android:name=".MapsActivity"
+            android:name=".view.MapsActivity"
             android:exported="true"
             android:label="Travel Book"
-            android:parentActivityName=".MainActivity">
+            android:parentActivityName=".view.MainActivity">
         </activity>
     </application>
 
