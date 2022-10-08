@@ -8,6 +8,7 @@ import android.location.LocationListener
 import android.location.LocationManager
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.View
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -149,6 +150,19 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapLon
         mMap.addMarker(MarkerOptions().position(p0))
         selectedLatitude = p0.latitude
         selectedLongitude = p0.longitude
+
+    }
+
+
+
+    fun savePlace(view: View){
+
+
+    }
+
+
+    fun deletePlace(view: View){
+
 
     }
 
