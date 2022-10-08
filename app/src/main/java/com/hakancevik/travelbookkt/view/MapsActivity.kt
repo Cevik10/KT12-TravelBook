@@ -1,6 +1,7 @@
 package com.hakancevik.travelbookkt.view
 
 import android.Manifest
+import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.location.Location
@@ -30,6 +31,9 @@ import com.hakancevik.travelbookkt.databinding.ActivityMapsBinding
 import com.hakancevik.travelbookkt.model.Place
 import com.hakancevik.travelbookkt.roomdb.PlaceDao
 import com.hakancevik.travelbookkt.roomdb.PlaceDatabase
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
+import io.reactivex.rxjava3.disposables.CompositeDisposable
+import io.reactivex.rxjava3.schedulers.Schedulers
 
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapLongClickListener {
 
@@ -47,9 +51,12 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapLon
     private var selectedLatitude: Double? = null
     private var selectedLongitude: Double? = null
 
-
+    // room database
     private lateinit var db: PlaceDatabase
     private lateinit var placeDao: PlaceDao
+
+    //rxJava
+    val compositeDisposable = CompositeDisposable()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -71,10 +78,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapLon
 
 
 
-        db = Room.databaseBuilder(
-            applicationContext,
-            PlaceDatabase::class.java, "Places"
-        ).build()
+        db = Room.databaseBuilder(applicationContext, PlaceDatabase::class.java, "Places")
+            .build()
 
         placeDao = db.placeDao()
 
@@ -86,6 +91,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapLon
         mMap = googleMap
         mMap.setOnMapLongClickListener(this)
 
+        val intent = intent
+        if (intent.getStringExtra("info").equals("new")) {
+            binding.savePlaceButton.visibility = View.VISIBLE
+            binding.deletePlaceButton.visibility = View.GONE
+
+        }else{
+            binding.deletePlaceButton.visibility = View.VISIBLE
+        }
 
         // casting
         locationManager = this.getSystemService(LOCATION_SERVICE) as LocationManager
@@ -174,10 +187,18 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapLon
 
     fun savePlace(view: View) {
 
+        // Main(UI) Thread, Default -> CPU, IO Thread (Internet / Database)
+
         if (selectedLatitude != null && selectedLongitude != null) {
             val place = Place(binding.placeNameText.text.toString(), selectedLatitude!!, selectedLongitude!!)
 
-            placeDao.insert(place)
+            compositeDisposable.add(
+                placeDao.insert(place)
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(this::handleResponse)
+            )
+
         }
 
     }
@@ -188,9 +209,27 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapLon
         if (selectedLatitude != null && selectedLongitude != null) {
             val place = Place(binding.placeNameText.text.toString(), selectedLatitude!!, selectedLongitude!!)
 
-            placeDao.delete(place)
+            compositeDisposable.add(
+                placeDao.delete(place)
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(this::handleResponse)
+            )
         }
 
+    }
+
+    private fun handleResponse(){
+        val intent = Intent(this,MainActivity::class.java)
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        startActivity(intent)
+    }
+
+
+    override fun onDestroy() {
+        super.onDestroy()
+
+        compositeDisposable.clear()
     }
 
 
