@@ -1,15 +1,18 @@
 package com.hakancevik.travelbookkt.view
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
+import android.graphics.Color
 import android.location.Location
 import android.location.LocationListener
 import android.location.LocationManager
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
+import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
@@ -56,7 +59,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapLon
     private lateinit var placeDao: PlaceDao
 
     //rxJava
-    val compositeDisposable = CompositeDisposable()
+    private val compositeDisposable = CompositeDisposable()
+
+    private var getterPlace: Place? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -67,6 +72,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapLon
         val mapFragment = supportFragmentManager
             .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
+
+
 
         registerLauncher()
 
@@ -84,6 +91,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapLon
         placeDao = db.placeDao()
 
 
+        binding.savePlaceButton.isEnabled = false
+
     }
 
 
@@ -93,18 +102,14 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapLon
 
         val intent = intent
         if (intent.getStringExtra("info").equals("new")) {
+
             binding.savePlaceButton.visibility = View.VISIBLE
             binding.deletePlaceButton.visibility = View.GONE
 
-        }else{
-            binding.deletePlaceButton.visibility = View.VISIBLE
-        }
+            // casting
+            locationManager = this.getSystemService(LOCATION_SERVICE) as LocationManager
 
-        // casting
-        locationManager = this.getSystemService(LOCATION_SERVICE) as LocationManager
-
-        locationListener = object : LocationListener {
-            override fun onLocationChanged(location: Location) {
+            locationListener = LocationListener { location ->
 
                 trackBoolean = sharedPreferences.getBoolean("info", false)
 
@@ -116,33 +121,55 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapLon
 
                 }
 
-
             }
 
-        }
 
-
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
-                Snackbar.make(binding.root, "Permission needed for location", Snackbar.LENGTH_INDEFINITE).setAction("Give Permission") {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.ACCESS_FINE_LOCATION)) {
+                    Snackbar.make(binding.root, "Permission needed for location", Snackbar.LENGTH_INDEFINITE).setAction("Give Permission") {
+                        // request permission
+                        permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                    }.show()
+                } else {
                     // request permission
                     permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
-                }.show()
+                }
             } else {
-                // request permission
-                permissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                // permission granted
+                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0f, locationListener)
+
+                val lastLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+                if (lastLocation != null) {
+                    val lastUserLocation = LatLng(lastLocation.latitude, lastLocation.longitude)
+                    mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(lastUserLocation, 15f))
+                }
+
+                mMap.isMyLocationEnabled = true
+
             }
+
+
         } else {
-            // permission granted
-            locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 0, 0f, locationListener)
 
-            val lastLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
-            if (lastLocation != null) {
-                val lastUserLocation = LatLng(lastLocation.latitude, lastLocation.longitude)
-                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(lastUserLocation, 15f))
+            mMap.clear()
+            val intent = intent
+            getterPlace = intent.getSerializableExtra("selectedPlace") as? Place
+
+            getterPlace?.let { place ->
+
+                val latlng = LatLng(place.latitude, place.longitude)
+                mMap.addMarker(MarkerOptions().position(latlng).title(place.name))
+                mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(latlng, 15f))
+
+                binding.placeNameText.setText(place.name)
+
+                binding.deletePlaceButton.visibility = View.VISIBLE
+                binding.savePlaceButton.visibility = View.GONE
+                binding.placeNameText.isEnabled = false
+                binding.placeNameText.setTextColor(Color.BLACK)
+
             }
 
-            mMap.isMyLocationEnabled = true
 
         }
 
@@ -182,6 +209,8 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapLon
         selectedLatitude = p0.latitude
         selectedLongitude = p0.longitude
 
+        binding.savePlaceButton.isEnabled = true
+
     }
 
 
@@ -206,8 +235,7 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapLon
 
     fun deletePlace(view: View) {
 
-        if (selectedLatitude != null && selectedLongitude != null) {
-            val place = Place(binding.placeNameText.text.toString(), selectedLatitude!!, selectedLongitude!!)
+        getterPlace?.let { place ->
 
             compositeDisposable.add(
                 placeDao.delete(place)
@@ -215,12 +243,13 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback, GoogleMap.OnMapLon
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(this::handleResponse)
             )
+
         }
 
     }
 
-    private fun handleResponse(){
-        val intent = Intent(this,MainActivity::class.java)
+    private fun handleResponse() {
+        val intent = Intent(this, MainActivity::class.java)
         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
         startActivity(intent)
     }

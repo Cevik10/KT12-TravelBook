@@ -17,7 +17,7 @@ class Place(
     var longitude: Double
 
 
-) {
+) : java.io.Serializable{
 
     @PrimaryKey(autoGenerate = true)
     var id = 0

@@ -37,8 +37,8 @@
             android:name=".view.MapsActivity"
             android:exported="true"
             android:label="Travel Book"
-            android:parentActivityName=".view.MainActivity">
-        </activity>
+            android:parentActivityName=".view.MainActivity"
+            android:windowSoftInputMode="adjustResize"></activity>
     </application>
 
 </manifest>

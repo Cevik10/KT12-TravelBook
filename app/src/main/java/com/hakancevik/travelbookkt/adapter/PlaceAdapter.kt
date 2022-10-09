@@ -8,7 +8,7 @@ import com.hakancevik.travelbookkt.databinding.RecyclerRowBinding
 import com.hakancevik.travelbookkt.model.Place
 import com.hakancevik.travelbookkt.view.MapsActivity
 
-class PlaceAdapter(var placeList: ArrayList<Place>) : RecyclerView.Adapter<PlaceAdapter.PlaceHolder>() {
+class PlaceAdapter(var placeList: List<Place>) : RecyclerView.Adapter<PlaceAdapter.PlaceHolder>() {
     class PlaceHolder(val binding: RecyclerRowBinding) : RecyclerView.ViewHolder(binding.root) {
 
     }
@@ -25,7 +25,7 @@ class PlaceAdapter(var placeList: ArrayList<Place>) : RecyclerView.Adapter<Place
         holder.itemView.setOnClickListener {
             val intent = Intent(holder.itemView.context, MapsActivity::class.java)
             intent.putExtra("info", "old")
-            intent.putExtra("id", placeList.get(position).id)
+            intent.putExtra("selectedPlace", placeList.get(position))
             holder.itemView.context.startActivity(intent)
         }
 
